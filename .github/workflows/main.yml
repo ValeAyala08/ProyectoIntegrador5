@@ -18,7 +18,7 @@ jobs:
       - name: Paso 2 Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.9.2'
+          python-version: '3.10'
       - name: Paso 3 - crea entorno virtual
         run: python -m venv venv
       - name: Paso 4 - activar entorno virtual
@@ -26,7 +26,7 @@ jobs:
       - name: Paso 5 - actualizar pip
         run: pip install --upgrade pip
       - name: Paso 6 - instalar dependencias
-        run: pip install -e .
+        run: pip install -r requirements.txt
       - name: Paso 7 - Ejecutar Script de main
         run: python src/piv/main.py
 
