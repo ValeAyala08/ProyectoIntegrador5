@@ -24,12 +24,19 @@ class DataCollector:
                 df = result
 
             if df.empty:
-                self.logger.warning("Yahoo Finance devolvió un DataFrame vacío. Puede ser un error temporal o bloqueo.")
+                self.logger.warning("Yahoo Finance devolvió un DataFrame vacío.")
                 return pd.DataFrame()
 
             df.reset_index(inplace=True)
-            df.columns = [str(col).lower().replace(" ", "_") for col in df.columns]
+
+            if isinstance(df.columns, pd.MultiIndex):
+                self.logger.warning("Se detectaron columnas con MultiIndex. Aplanando...")
+                df.columns = ['_'.join(filter(None, map(str, col))).lower() for col in df.columns]
+            else:
+                df.columns = [str(col).lower().replace(" ", "_") for col in df.columns]
+
             self.logger.info(f"{len(df)} filas descargadas.")
+            self.logger.debug(f"Columnas resultantes: {df.columns.tolist()}")
             return df
 
         except Exception as e:
@@ -41,15 +48,32 @@ class DataCollector:
             self.logger.warning("No hay datos para guardar en el CSV.")
             return
 
+        if 'date' not in df.columns:
+            self.logger.error(f"La columna 'date' no está presente en el DataFrame: columnas = {df.columns.tolist()}")
+            return
+
+        self.logger.debug(f"Primeras filas del DataFrame nuevo:\n{df.head()}")
+        self.logger.debug(f"Columnas del DataFrame nuevo: {df.columns.tolist()}")
+
         try:
             os.makedirs(os.path.dirname(self.csv_path), exist_ok=True)
+
             if os.path.exists(self.csv_path):
-                existing = pd.read_csv(self.csv_path)
-                merged = pd.concat([existing, df]).drop_duplicates(subset="date")
-                self.logger.info("Hay un CSV existente. Fusionando.")
+                try:
+                    existing = pd.read_csv(self.csv_path)
+
+                    if 'date' not in existing.columns:
+                        self.logger.warning("El CSV existente no contiene la columna 'date'. Se sobrescribirá.")
+                        merged = df
+                    else:
+                        merged = pd.concat([existing, df]).drop_duplicates(subset="date").sort_values(by="date")
+                        self.logger.info("Hay un CSV existente. Fusionando.")
+                except Exception as e:
+                    self.logger.error(f"Error al leer el CSV existente: {e}")
+                    merged = df
             else:
-                merged = df
                 self.logger.warning("Archivo CSV no encontrado. Se creará uno nuevo.")
+                merged = df
 
             merged.to_csv(self.csv_path, index=False)
             self.logger.info(f"CSV actualizado. Total: {len(merged)} registros.")
