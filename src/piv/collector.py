@@ -52,22 +52,19 @@ class DataCollector:
             self.logger.error(f"La columna 'date' no está presente en el DataFrame: columnas = {df.columns.tolist()}")
             return
 
-        self.logger.debug(f"Primeras filas del DataFrame nuevo:\n{df.head()}")
-        self.logger.debug(f"Columnas del DataFrame nuevo: {df.columns.tolist()}")
-
         try:
             os.makedirs(os.path.dirname(self.csv_path), exist_ok=True)
+            df['date'] = pd.to_datetime(df['date'], errors='coerce')
+            df = df.dropna(subset=["date"])
 
             if os.path.exists(self.csv_path):
                 try:
                     existing = pd.read_csv(self.csv_path)
+                    existing['date'] = pd.to_datetime(existing['date'], errors='coerce')
+                    existing = existing.dropna(subset=["date"])
 
-                    if 'date' not in existing.columns:
-                        self.logger.warning("El CSV existente no contiene la columna 'date'. Se sobrescribirá.")
-                        merged = df
-                    else:
-                        merged = pd.concat([existing, df]).drop_duplicates(subset="date").sort_values(by="date")
-                        self.logger.info("Hay un CSV existente. Fusionando.")
+                    merged = pd.concat([existing, df]).drop_duplicates(subset="date").sort_values(by="date")
+                    self.logger.info("Hay un CSV existente. Fusionando.")
                 except Exception as e:
                     self.logger.error(f"Error al leer el CSV existente: {e}")
                     merged = df
@@ -87,10 +84,16 @@ class DataCollector:
 
         try:
             os.makedirs(os.path.dirname(self.db_path), exist_ok=True)
+            df['date'] = pd.to_datetime(df['date'], errors='coerce').dt.date
+            df = df.dropna(subset=["date"])
+
             self.logger.info("Conectando a SQLite.")
             with sqlite3.connect(self.db_path) as conn:
                 try:
                     existing = pd.read_sql("SELECT * FROM bitcoin_data", conn)
+                    existing['date'] = pd.to_datetime(existing['date'], errors='coerce').dt.date
+                    existing = existing.dropna(subset=["date"])
+
                     merged = pd.concat([existing, df]).drop_duplicates(subset="date")
                     self.logger.info("Hay datos existentes. Fusionando...")
                 except Exception:
@@ -101,3 +104,9 @@ class DataCollector:
                 self.logger.info(f"SQLite actualizado. Total: {len(merged)} registros.")
         except Exception as e:
             self.logger.error(f"Error al actualizar SQLite: {e}")
+    def fetch_data_and_save(self):
+        df = self.fetch_data()
+        self.update_csv(df)
+        self.update_sqlite(df)
+
+              

@@ -1,3 +1,7 @@
 pandas==2.2.2
 yfinance>=0.2.36
 openpyxl
+numpy
+joblib
+streamlit 
+matplotlib
