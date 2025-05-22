@@ -5,7 +5,7 @@ from logger import setup_logger
 import os
 
 class DataCollector:
-    def __init__(self, ticker="BTC-EUR", db_path="src/piv/static/data/historical.db", csv_path="src/piv/static/data/historical.csv"):
+    def __init__(self, ticker="005930.KS", db_path="src/piv/static/data/historical.db", csv_path="src/piv/static/data/historical.csv"):
         self.ticker = ticker
         self.db_path = db_path
         self.csv_path = csv_path

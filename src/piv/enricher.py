@@ -1,5 +1,3 @@
-# src/piv/utils/data_enrichment.py
-
 import pandas as pd
 import yfinance as yf
 
@@ -19,11 +17,18 @@ def enriquecer_datos(df: pd.DataFrame) -> pd.DataFrame:
 
     # Merge externo por fecha
     df = pd.merge(df, sp500, how="left", on="date")
+    print("Columnas en df:", df.columns.tolist())
 
+     #Verificar que exista una columna con "close" y renombrarla
+    close_cols = [col for col in df.columns if "close" in col.lower()]
+    if close_cols:
+        df.rename(columns={close_cols[0]: "close_samsung"}, inplace=True)
+    else:
+        raise KeyError(f"No se encontró ninguna columna que contenga 'close'. Columnas disponibles: {df.columns.tolist()}")
 
     # Variables adicionales
-    df["rolling_mean_7"] = df["close_btc-eur"].rolling(7).mean()
-    df["return"] = df["close_btc-eur"].pct_change()
+    df["rolling_mean_7"] = df["close_samsung"].rolling(7).mean()
+    df["return"] = df["close_samsung"].pct_change()
     df["volatility_7"] = df["return"].rolling(7).std()
     df["return_cum"] = (1 + df["return"].fillna(0)).cumprod()
 

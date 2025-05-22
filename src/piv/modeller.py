@@ -11,7 +11,7 @@ class Modeller:
         self.model_path = model_path
         self.model = LinearRegression()
 
-    def entrenar(self, df: pd.DataFrame, feature_col="close_btc-eur", target_col="close_btc-eur"):
+    def entrenar(self, df: pd.DataFrame, feature_col="close_samsung", target_col="close_samsung"):
         """
         Entrena un modelo de regresión lineal con un retraso de una unidad temporal y guarda el modelo.
         """
