@@ -29,8 +29,6 @@ jobs:
         run: pip install -r requirements.txt
       - name: Paso 7 - Ejecutar Script de main
         run: python src/piv/main.py
-      - name: Paso 8 - Ejecutar Dashboart
-        run: streamlit run src/piv/dashboard.py
 
 
       - name: Commit and Push changes
